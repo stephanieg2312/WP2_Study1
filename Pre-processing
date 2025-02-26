@@ -134,3 +134,6 @@ df$pc_female_self <- rowMeans(df[,c("")], na.rm = TRUE)
 df$pc_female_other <- rowMeans(df[,c("")], na.rm = TRUE)
 df$pc_male_self <- rowMeans(df[,c("")], na.rm = TRUE)
 df$pc_male_other <- rowMeans(df[,c("")], na.rm = TRUE)
+
+
+# dummy coding for groups 

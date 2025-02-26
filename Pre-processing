@@ -1,0 +1,136 @@
+# load packages
+library(readr)
+library(dplyr)
+library(janitor)
+library(stringr)
+library(tidyverse)
+library(psych)
+library(forcats)
+
+# load datasets
+honorbackground <- read_csv("honorbackground.csv")
+whitebritish <- read_csv("whitebritish.csv")
+
+# merge datasets
+df <- honorbackground |> full_join(whitebritish)
+print(df)
+
+#renaming variables in dataset
+
+# screener validation
+names(df)[names(df) == "Q2.1"] <- "prolific_id"
+names(df)[names(df) == "Q3.2"] <- "gender"
+names(df)[names(df) == "Q3.3"] <- "sex"
+names(df)[names(df) == "Q3.4"] <- "age"
+names(df)[names(df) == "Q3.5"] <- "birth_country"
+names(df)[names(df) == "Q3.6"] <- "ethnicity"
+
+# scenario manipulation check questions
+names(df)[names(df) == "Q5.2"] <- "female_self_manip"
+names(df)[names(df) == "Q9.2"] <- "female_other_manip"
+names(df)[names(df) == "Q12.2"] <- "male_self_manip"
+names(df)[names(df) == "Q16.2"] <- "male_other_manip"
+
+# remove qualtrics metadata rows (change is NOT reversable!!)
+df <- df[-c(1,2,198,199), ] 
+
+# remove unwanted extra columns from dataset (change is NOT reversable!!)
+df <- df |> select(-c(StartDate, EndDate, Status, Progress, `Duration (in seconds)`, Finished, RecordedDate, DistributionChannel, UserLanguage))
+
+
+# convert character columns to factors
+df <- df |>
+  mutate(across(where(is.character), as.factor))
+
+
+# recode character values to numeric values for below scales:
+# perceived conflict, honor values self
+
+df <- df |>
+  mutate(across(c(Q5.4_1, Q5.4_2, Q5.4_3, Q5.4_4, Q5.4_5, Q5.4_6, Q9.4_1, Q9.4_2, Q9.4_3, Q9.4_4, Q9.4_5, Q9.4_6, Q12.4_1, Q12.4_2, Q12.4_3, Q12.4_4, Q12.4_5, Q12.4_6, Q16.4_1, Q16.4_2, Q16.4_3, Q16.4_4, Q16.4_5, Q16.4_6, Q19.3_1, Q19.3_2, Q19.3_3, Q19.3_4, Q19.3_5, Q19.3_6, Q19.3_7, Q19.3_8, Q21.3_1, Q21.3_2, Q21.3_3, Q21.3_4, Q21.3_5, Q21.3_6), ~ case_when(
+    . == "Strongly Disagree 1" ~ 1,
+    . == "Moderately Disagree 2" ~ 2,
+    . == "Slightly Disagree 3" ~ 3,
+    . == "Neither Agree nor Disagree 4" ~ 4,
+    . == "Slightly Agree 5" ~ 5,
+    . == "Moderately Agree 6" ~ 6,
+    . == "Strongly Agree 7" ~ 7,
+    TRUE ~ NA_real_
+  )))
+
+# recode character values to numeric values for below scale:
+# honor values community
+
+df <- df |>
+  mutate(across(c(Q20.2_1, Q20.2_2, Q20.2_3, Q20.2_4, Q20.2_5, Q20.2_6, Q20.2_7, Q20.2_8), ~ case_when(
+    . == "Most People Would Strongly Disagree 1" ~ 1,
+    . == "Most People Would Moderately Disagree 2" ~ 2,
+    . == "Most People Would Slightly Disagree 3" ~ 3,
+    . == "Most People Would Neither Agree nor disagree 4" ~ 4,
+    . == "Most People Would Slightly Agree 5" ~ 5,
+    . == "Most People Would Moderately Agree 6" ~ 6,
+    . == "Most People Would Strongly Agree 7" ~ 7,
+    TRUE ~ NA_real_
+  )))
+
+# recode character values to numeric values for below scales:
+# honor endorse self, honor endorse group
+
+df <- df |>
+  mutate(across(c(Q23.2_1, Q23.2_2, Q23.2_3, Q23.2_4, Q23.2_5, Q24.2_1, Q24.2_2, Q24.2_3, Q24.2_4, Q24.2_5), ~ case_when(
+    . == "Strongly disagree 1" ~ 1,
+    . == "Moderately disagree 2" ~ 2,
+    . == "Slightly disagree 3" ~ 3,
+    . == "Neither agree nor disagree 4" ~ 4,
+    . == "Slightly agree 5" ~ 5,
+    . == "Moderately agree 6" ~ 6,
+    . == "Strongly agree 7" ~ 7,
+    TRUE ~ NA_real_
+  )))
+
+# recode character values to numeric values for below scales:
+# subjective wellbeing
+
+df <- df |>
+  mutate(across(c(Q26.2_1, Q26.2_2, Q26.2_3, Q26.2_4, Q26.2_5, Q26.2_6, Q26.2_7, Q26.2_8, Q26.2_9, Q26.2_10), ~ case_when(
+    . == "Not at all satisfied 1" ~ 1,
+    . == "Slightly satisfied 2" ~ 2,
+    . == "Somewhat satisfied 3" ~ 3,
+    . == "Neutral 4" ~ 4,
+    . == "Moderately satisfied 5" ~ 5,
+    . == "Very satisfied 6" ~ 6,
+    . == "Completely satisfied 7" ~ 7,
+    TRUE ~ NA_real_
+  )))
+
+
+
+# assess internal consistency reliability
+
+# perceived conflict
+psych::alpha(df[,c("Q5.4_1", "Q5.4_2", "Q5.4_3", "Q5.4_4", "Q5.4_5", "Q5.4_6")])
+psych::alpha(df[,c("Q9.4_1", "Q9.4_2", "Q9.4_3", "Q9.4_4", "Q9.4_5", "Q9.4_6")])
+psych::alpha(df[,c("Q12.4_1", "Q12.4_2", "Q12.4_3", "Q12.4_4", "Q12.4_5", "Q12.4_6")])
+psych::alpha(df[,c("Q16.4_1", "Q16.4_2", "Q16.4_3", "Q16.4_4", "Q16.4_5", "Q16.4_6")])
+
+# honor values self
+psych::alpha(df[,c("Q19.3_1", "Q19.3_2", "Q19.3_3", "Q19.3_4", "Q19.3_5", "Q19.3_6", "Q19.3_7", "Q19.3_8")])
+
+# honor values community
+psych::alpha(df[,c("Q20.2_1", "Q20.2_2", "Q20.2_3", "Q20.2_4", "Q20.2_5", "Q20.2_6", "Q20.2_7", "Q20.2_8")])
+
+# honor endorse self, honor endorse group
+psych::alpha(df[,c("Q23.2_1", "Q23.2_2", "Q23.2_3", "Q23.2_4", "Q23.2_5")])
+psych::alpha(df[,c("Q24.2_1", "Q24.2_2", "Q24.2_3", "Q24.2_4", "Q24.2_5")])
+
+# subjective wellbeing
+psych::alpha(df[,c("Q26.2_1", "Q26.2_2", "Q26.2_3", "Q26.2_4", "Q26.2_5", "Q26.2_6", "Q26.2_7", "Q26.2_8", "Q26.2_9", "Q26.2_10")])
+
+
+# compute average scores from scale item scores (NOT COMPLETE, NEEDS TO BE EDITED)
+
+# perceived conflict
+df$pc_female_self <- rowMeans(df[,c("")], na.rm = TRUE)
+df$pc_female_other <- rowMeans(df[,c("")], na.rm = TRUE)
+df$pc_male_self <- rowMeans(df[,c("")], na.rm = TRUE)
+df$pc_male_other <- rowMeans(df[,c("")], na.rm = TRUE)
